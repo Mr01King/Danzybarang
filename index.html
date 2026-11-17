@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rak Obat</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#eef3f6; --surface:#fff; --ink:#14232e; --muted:#5d7080; --line:#d5dfe6; --accent:#0b7a5b; --accent-ink:#fff; --danger:#b3261e; --soft:#e4edf2; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1a21; --surface:#17252e; --ink:#e6eef3; --muted:#8fa3b1; --line:#28404d; --accent:#3ccf9f; --accent-ink:#06231a; --danger:#ff8a80; --soft:#20343f; }
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body { font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink);
+         padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0); line-height:1.45; }
+  input, button { font:inherit; color:var(--ink); }
+  :focus-visible { outline:3px solid var(--accent); outline-offset:1px; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:clamp(28px,6vw,42px); margin:0 0 4px; letter-spacing:-0.02em; }
+  .sub { margin:0 0 16px; color:var(--muted); }
+  .search { width:100%; padding:12px 14px; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; }
+  input[type=file] { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+  /* beranda: kartu foto rak */
+  .rak-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
+  .kartu { position:relative; display:block; width:100%; padding:0; text-align:left; background:var(--surface); border:1.5px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; }
+  .kartu .gambar { height:150px; background:var(--soft); display:grid; place-items:center; color:var(--muted); font-size:14px; }
+  .kartu img { width:100%; height:150px; object-fit:cover; display:block; }
+  .kartu .teks { display:flex; justify-content:space-between; align-items:baseline; padding:10px 14px; }
+  .kartu b { font-size:17px; }
+  .kartu span { color:var(--muted); font-size:13px; }
+
+  /* hasil cari di beranda */
+  .hasil { display:grid; gap:8px; }
+  .hasil button { display:flex; align-items:center; gap:12px; width:100%; padding:10px 12px; text-align:left; background:var(--surface); border:1.5px solid var(--line); border-radius:10px; cursor:pointer; }
+  .hasil .nm { flex:1; font-weight:600; }
+  .hasil .rk { color:var(--accent); font-weight:600; font-size:14px; }
+
+  /* halaman rak */
+  .back { padding:8px 12px; margin-bottom:14px; border:1.5px solid var(--line); border-radius:8px; background:var(--surface); cursor:pointer; }
+  .foto-rak { position:relative; border-radius:12px; overflow:hidden; border:1.5px solid var(--line); margin-bottom:16px; background:var(--soft); }
+  .foto-rak img { display:block; width:100%; max-height:260px; object-fit:cover; }
+  .foto-rak .aksi { position:absolute; right:8px; bottom:8px; display:flex; gap:6px; }
+  .chip { position:relative; padding:6px 10px; font-size:13px; font-weight:600; border-radius:8px; border:0; background:rgba(0,0,0,.65); color:#fff; cursor:pointer; }
+  .tambah-foto { position:relative; display:flex; align-items:center; justify-content:center; height:90px; color:var(--muted); cursor:pointer; }
+  .panel { background:var(--surface); border:1.5px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  ul { list-style:none; margin:0; padding:0; }
+  li { display:grid; grid-template-columns:56px 1fr auto; gap:10px; align-items:center; padding:10px 14px; }
+  li + li { border-top:1px solid var(--line); }
+  .thumb { position:relative; width:56px; height:56px; border-radius:8px; overflow:hidden; background:var(--soft); border:1.5px solid var(--line); display:grid; place-items:center; color:var(--muted); font-size:12px; cursor:pointer; }
+  .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .info { min-width:0; display:grid; gap:4px; }
+  .edit { width:100%; padding:4px 6px; border:1.5px solid transparent; border-radius:6px; background:transparent; }
+  .edit:hover { border-color:var(--line); }
+  .edit.nama { font-weight:600; }
+  .harga { display:flex; align-items:center; gap:4px; color:var(--muted); }
+  .harga .edit { color:var(--ink); }
+  .samping { display:grid; gap:6px; justify-items:end; }
+  .qty { display:inline-flex; align-items:center; gap:4px; }
+  .qty button, .del { width:30px; height:30px; border-radius:8px; border:1.5px solid var(--line); background:transparent; cursor:pointer; }
+  .qty span { min-width:22px; text-align:center; font-weight:600; }
+  .del { color:var(--danger); }
+  .empty { padding:16px 14px; color:var(--muted); }
+  form { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:14px; }
+  form h3 { grid-column:1 / -1; margin:0 0 2px; font-size:16px; }
+  form .lebar { grid-column:1 / -1; }
+  form input[type=text], form input[type=number] { width:100%; padding:9px 10px; background:transparent; border:1.5px solid var(--line); border-radius:8px; }
+  .btn-foto { position:relative; display:flex; align-items:center; justify-content:center; padding:9px 10px; border:1.5px dashed var(--line); border-radius:8px; color:var(--muted); cursor:pointer; font-size:14px; }
+  .btn-foto.ada { color:var(--accent); border-color:var(--accent); font-weight:600; }
+  form button[type=submit] { padding:9px 14px; font-weight:600; border:0; border-radius:8px; background:var(--accent); color:var(--accent-ink); cursor:pointer; }
+  .reset { margin-top:8px; padding:9px 14px; border:1.5px solid var(--line); border-radius:8px; background:var(--surface); cursor:pointer; }
+  #toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom,0)); transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:10px; display:none; max-width:90%; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="toast" role="status"></div>
+
+<script>
+  var KEY = "rak-obat-v2", JUMLAH_RAK = 8;
+  var data, rakAktif = null, cariBeranda = "", cariRak = "";
+
+  function kosong() { var d = []; for (var i = 0; i < JUMLAH_RAK; i++) d.push({ foto: "", items: [] }); return d; }
+  function load() {
+    try { var raw = localStorage.getItem(KEY); if (raw) { var p = JSON.parse(raw); if (Array.isArray(p) && p.length === JUMLAH_RAK) return p; } } catch (e) {}
+    var d = kosong();
+    d[0].items = [{ nama: "Paracetamol 500 mg", harga: 5000, qty: 20, foto: "" }, { nama: "Amoxicillin 500 mg", harga: 12000, qty: 10, foto: "" }];
+    return d;
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); return true; } catch (e) { toast("Penyimpanan penuh. Hapus beberapa foto."); return false; } }
+  function toast(m) { var t = document.getElementById("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(toast.h); toast.h = setTimeout(function () { t.style.display = "none"; }, 3500); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); }
+  function rupiah(n) { return "Rp " + (Number(n) || 0).toLocaleString("id-ID"); }
+
+  function kompres(file, maks, mutu) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var s = Math.min(1, maks / Math.max(img.width, img.height)), c = document.createElement("canvas");
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg", mutu));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Foto tidak bisa dibaca")); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- tampilan ---------- */
+  function renderBeranda() {
+    var q = cariBeranda.trim().toLowerCase(), html = "";
+    html += "<h1>Rak Obat</h1><p class='sub'>Tekan foto rak untuk melihat isinya.</p>";
+    html += "<input class='search' id='cari-beranda' type='search' placeholder='Cari nama barang di semua rak' aria-label='Cari barang' value='" + esc(cariBeranda) + "'>";
+    html += "<div id='isi-beranda'>" + isiBeranda(q) + "</div>";
+    return html;
+  }
+
+  function isiBeranda(q) {
+    var html = "";
+    if (q) {
+      var ada = false; html += "<div class='hasil'>";
+      data.forEach(function (rak, r) {
+        rak.items.forEach(function (it) {
+          if (it.nama.toLowerCase().indexOf(q) === -1) return;
+          ada = true;
+          html += "<button data-buka='" + r + "'><span class='nm'>" + esc(it.nama) + "</span><span>" + rupiah(it.harga) + "</span><span class='rk'>Rak " + (r + 1) + "</span></button>";
+        });
+      });
+      html += "</div>";
+      if (!ada) html = "<p class='sub'>Tidak ada barang dengan nama itu.</p>";
+      return html;
+    }
+    html += "<div class='rak-grid'>";
+    data.forEach(function (rak, r) {
+      html += "<button class='kartu' data-buka='" + r + "'><div class='gambar'>" +
+        (rak.foto ? "<img src='" + rak.foto + "' alt='Foto Rak " + (r + 1) + "'>" : "Belum ada foto") +
+        "</div><div class='teks'><b>Rak " + (r + 1) + "</b><span>" + rak.items.length + " barang</span></div></button>";
+    });
+    return html + "</div>";
+  }
+
+  function renderRak(r) {
+    var rak = data[r], q = cariRak.trim().toLowerCase(), html = "";
+    html += "<button class='back' id='kembali'>← Semua rak</button><h1>Rak " + (r + 1) + "</h1>";
+    html += "<div class='foto-rak'>";
+    if (rak.foto) {
+      html += "<img src='" + rak.foto + "' alt='Foto Rak " + (r + 1) + "'><div class='aksi'>" +
+        "<label class='chip'>Ganti foto<input type='file' accept='image/*' data-rakfoto></label>" +
+        "<button class='chip' data-act='hapusfotorak' type='button'>Hapus</button></div>";
+    } else {
+      html += "<label class='tambah-foto'>+ Tambah foto rak<input type='file' accept='image/*' data-rakfoto></label>";
+    }
+    html += "</div>";
+    html += "<input class='search' id='cari-rak' type='search' placeholder='Cari nama barang di rak ini' aria-label='Cari barang di rak' value='" + esc(cariRak) + "'>";
+    html += "<div class='panel' id='daftar'>" + daftar(r, q) + "</div>";
+    html += "<div class='panel'><form data-rak='" + r + "'><h3>Tambah barang</h3>" +
+      "<input class='lebar' type='text' name='nama' placeholder='Nama barang' required aria-label='Nama barang'>" +
+      "<input type='number' name='harga' min='0' inputmode='numeric' placeholder='Harga (Rp)' aria-label='Harga'>" +
+      "<input type='number' name='qty' min='0' value='1' aria-label='Jumlah'>" +
+      "<label class='btn-foto'>Foto barang<input type='file' accept='image/*' name='foto'></label>" +
+      "<button type='submit'>Tambah</button></form></div>";
+    return html;
+  }
+
+  function daftar(r, q) {
+    var ul = "", n = 0;
+    data[r].items.forEach(function (it, i) {
+      if (q && it.nama.toLowerCase().indexOf(q) === -1) return;
+      n++;
+      ul += "<li data-i='" + i + "'><label class='thumb' title='Ganti foto barang'>" +
+        (it.foto ? "<img src='" + it.foto + "' alt='" + esc(it.nama) + "'>" : "Foto") +
+        "<input type='file' accept='image/*' data-itemfoto></label>" +
+        "<div class='info'><input class='edit nama' data-field='nama' value='" + esc(it.nama) + "' aria-label='Nama barang'>" +
+        "<div class='harga'>Rp<input class='edit' data-field='harga' type='number' min='0' inputmode='numeric' value='" + (it.harga || 0) + "' aria-label='Harga'></div></div>" +
+        "<div class='samping'><span class='qty'><button data-act='min' type='button' aria-label='Kurangi stok'>−</button><span>" + it.qty +
+        "</span><button data-act='plus' type='button' aria-label='Tambah stok'>+</button></span>" +
+        "<button class='del' data-act='del' type='button' aria-label='Hapus " + esc(it.nama) + "'>✕</button></div></li>";
+    });
+    if (!n) return "<div class='empty'>" + (q ? "Tidak ada barang dengan nama itu di rak ini." : "Rak masih kosong. Tambahkan barang di bawah.") + "</div>";
+    return "<ul>" + ul + "</ul>";
+  }
+
+  function render() {
+    var app = document.getElementById("app");
+    app.innerHTML = rakAktif === null ? renderBeranda() : renderRak(rakAktif);
+  }
+
+  function buka(r) {
+    rakAktif = r; cariRak = ""; cariBeranda = "";
+    location.hash = r === null ? "" : "rak" + (r + 1);
+    render(); window.scrollTo(0, 0);
+  }
+
+  function dariHash() {
+    var m = location.hash.match(/^#rak([1-8])$/);
+    var r = m ? +m[1] - 1 : null;
+    if (r !== rakAktif) { rakAktif = r; cariRak = ""; render(); }
+  }
+
+  /* ---------- aksi ---------- */
+  var app = document.getElementById("app");
+
+  app.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-buka]");
+    if (b) return buka(+b.dataset.buka);
+    if (e.target.closest("#kembali")) return buka(null);
+    var btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    var act = btn.dataset.act, li = btn.closest("li"), i = li ? +li.dataset.i : -1, r = rakAktif;
+    if (act === "plus") data[r].items[i].qty++;
+    if (act === "min") data[r].items[i].qty = Math.max(0, data[r].items[i].qty - 1);
+    if (act === "del") data[r].items.splice(i, 1);
+    if (act === "hapusfotorak") data[r].foto = "";
+    save(); render();
+  });
+
+  app.addEventListener("input", function (e) {
+    if (e.target.id === "cari-beranda") {
+      cariBeranda = e.target.value;
+      document.getElementById("isi-beranda").innerHTML = isiBeranda(cariBeranda.trim().toLowerCase());
+    }
+    if (e.target.id === "cari-rak") {
+      cariRak = e.target.value;
+      document.getElementById("daftar").innerHTML = daftar(rakAktif, cariRak.trim().toLowerCase());
+    }
+  });
+
+  app.addEventListener("change", function (e) {
+    var el = e.target, r = rakAktif;
+    if (r === null) return;
+    if (el.hasAttribute("data-rakfoto") && el.files[0]) {
+      kompres(el.files[0], 900, 0.7).then(function (d) { var lama = data[r].foto; data[r].foto = d; if (save()) render(); else data[r].foto = lama; }).catch(function (er) { toast(er.message); });
+    } else if (el.hasAttribute("data-itemfoto") && el.files[0]) {
+      var i = +el.closest("li").dataset.i;
+      kompres(el.files[0], 360, 0.7).then(function (d) { var lama = data[r].items[i].foto; data[r].items[i].foto = d; if (save()) render(); else data[r].items[i].foto = lama; }).catch(function (er) { toast(er.message); });
+    } else if (el.dataset.field) {
+      var it = data[r].items[+el.closest("li").dataset.i];
+      if (el.dataset.field === "nama") { var v = el.value.trim(); if (v) it.nama = v; else el.value = it.nama; }
+      if (el.dataset.field === "harga") it.harga = Math.max(0, parseInt(el.value, 10) || 0);
+      save();
+    } else if (el.name === "foto") {
+      var lbl = el.closest(".btn-foto");
+      lbl.classList.toggle("ada", !!el.files[0]);
+      lbl.firstChild.textContent = el.files[0] ? "✓ Foto dipilih" : "Foto barang";
+    }
+  });
+
+  app.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = e.target, r = +f.dataset.rak, nama = f.nama.value.trim();
+    if (!nama) return;
+    var item = { nama: nama, harga: Math.max(0, parseInt(f.harga.value, 10) || 0), qty: Math.max(0, parseInt(f.qty.value, 10) || 0), foto: "" };
+    function selesai() { data[r].items.push(item); if (!save()) data[r].items.pop(); render(); }
+    if (f.foto.files[0]) kompres(f.foto.files[0], 360, 0.7).then(function (d) { item.foto = d; selesai(); }).catch(function (er) { toast(er.message); });
+    else selesai();
+  });
+
+  window.addEventListener("hashchange", dariHash);
+  data = load();
+  dariHash();
+  render();
+</script>
+</body>
+</html>
